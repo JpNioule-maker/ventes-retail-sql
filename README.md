@@ -82,7 +82,55 @@ La comparaison mois par mois montre de fortes variations d'un mois à l'autre : 
 ### Autres observations
 
 - **Les fêtes de fin d'année concentrent l'activité** : les meilleurs mois de la période sont tous des mois de novembre ou de décembre.
-- **Les promotions pèsent sur la rentabilité** : une remise baisse le prix de vente sans changer le coût d'achat. L'effet reste à chiffrer par une requête dédiée (voir les prochaines étapes).
+- **Les promotions pèsent sur la rentabilité** : le taux de marge passe de 38,6 % sans remise à 17,4 % avec 20 % de remise (détail ci-dessous).
+
+### Rentabilité et moteurs de la croissance
+
+*Source : `Exercices/02_analyses_complementaires.sql`.*
+
+**Taux de marge par catégorie (janvier 2024 à septembre 2026)**
+
+| Catégorie | Ventes | CA net (€) | Marge (€) | Taux de marge |
+|:---|---:|---:|---:|---:|
+| Mobilier | 819 | 124 231 | 58 854 | 47,4 % |
+| Audio | 681 | 105 452 | 44 719 | 42,4 % |
+| Informatique | 827 | 155 610 | 41 150 | 26,4 % |
+
+**Constat** : l'Informatique apporte le plus de chiffre d'affaires (40 % du total) mais le moins de marge ; le Mobilier apporte le plus de marge (41 % du total). La croissance repose donc sur les produits les moins rentables, et le recul du Mobilier touche directement la marge.
+
+**Taux de marge selon la remise**
+
+| Remise | Ventes | CA net (€) | Taux de marge |
+|---:|---:|---:|---:|
+| 0 % | 2 045 | 342 837 | 38,6 % |
+| 10 % | 139 | 20 177 | 33,1 % |
+| 15 % | 116 | 18 831 | 26,7 % |
+| 20 % | 27 | 3 448 | 17,4 % |
+
+**Constat** : chaque palier de remise coûte plusieurs points de marge. Les ventes remisées ne pèsent que 12 % des ventes et 11 % du chiffre d'affaires : l'effet reste limité sur l'ensemble.
+
+**D'où vient la croissance ? 2025 contre 2024** (CA = nombre de ventes × panier moyen)
+
+| Catégorie | Nombre de ventes | Panier moyen | CA |
+|:---|---:|---:|---:|
+| Audio | +59,1 % | +0,2 % | +59,5 % |
+| Informatique | +34,4 % | +8,9 % | +46,3 % |
+| Mobilier | −10,7 % | +3,0 % | −8,0 % |
+
+**Constat** : la croissance de l'Audio vient entièrement du volume. Celle de l'Informatique combine volume et panier plus élevé. Le Mobilier perd des ventes : la légère hausse du panier, liée aux prix, ne compense pas.
+
+**Canaux et magasins, 2025 contre 2024**
+
+- Le chiffre d'affaires total progresse de 26,9 % (123 772 € à 157 075 €).
+- Les canaux restent équilibrés : magasins 51 %, en ligne 49 %, avec des taux de marge proches (37,9 % et 36,6 % en 2025).
+- La croissance vient de la vente en ligne (+28,2 %) et de trois magasins : Marseille (+56,3 %, ouvert fin 2023), Toulouse (+35,7 %), Paris (+28,4 %). Lyon (+3,3 %), Bordeaux (+3,8 %) et Strasbourg (−1,1 %, ouvert en 2024) stagnent.
+
+**Recommandations** :
+1. Relancer le Mobilier, catégorie la plus rentable, en priorité sur le volume (visibilité, offre) plutôt que par des remises, qui érodent sa marge.
+2. Surveiller la marge globale : la croissance repose sur l'Informatique, la catégorie la moins rentable.
+3. Analyser les magasins qui stagnent (Lyon, Bordeaux, Strasbourg) : zone de chalandise, offre, ancienneté.
+
+*Limite : le coût d'achat est fixe dans les données alors que les prix de vente augmentent chaque année ; les taux de marge ne sont donc pas comparés d'une année à l'autre.*
 
 ---
 
@@ -97,7 +145,8 @@ ventes-retail-sql/
 │   ├── 03_enrichissement_donnees.sql   Données réalistes, calendrier, vue v_ventes_detail
 │   └── 04_arret_septembre_2026.sql     Arrêt des données à la date de l'analyse
 └── Exercices/
-    └── 01_seance_projet_ventes_retail.sql   Vues, sous-requêtes, CTE, fonctions de fenêtre
+    ├── 01_seance_projet_ventes_retail.sql   Vues, sous-requêtes, CTE, fonctions de fenêtre
+    └── 02_analyses_complementaires.sql      Marge, décomposition du CA, canaux et magasins
 ```
 
 ---
@@ -143,7 +192,7 @@ Arrêt des données à la date de l'analyse par un script dédié, dans une tran
 - [x] Sous-requêtes
 - [x] CTE
 - [x] Fonctions de fenêtre : classements, cumuls, comparaisons d'une période à l'autre
-- [ ] Compléter l'analyse : taux de marge par catégorie et selon la remise, décomposition du chiffre d'affaires (nombre de ventes × panier moyen), canal et magasins
+- [x] Compléter l'analyse : taux de marge par catégorie et selon la remise, décomposition du chiffre d'affaires (nombre de ventes × panier moyen), canal et magasins
 - [ ] Projet 1 : diagnostic commercial complet, sur des données réelles
 - [ ] Tableau de bord Power BI avec mesures DAX d'évolution annuelle
 

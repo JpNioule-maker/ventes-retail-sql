@@ -338,3 +338,8 @@ FROM ca_annuel;
 
 SELECT * FROM v_bilan_categorie_annee ORDER BY annee, rang_dans_annee;
 
+-- Bilan 2025 seul : 2025 contre 2024, deux années complètes
+SELECT * FROM v_bilan_categorie_annee
+WHERE annee = 2025
+ORDER BY rang_dans_annee;
+
