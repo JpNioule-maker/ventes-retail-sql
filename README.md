@@ -1,6 +1,6 @@
 # Ventes Retail : analyse SQL d'une enseigne de distribution
 
-Projet d'apprentissage de l'analyse de données avec **PostgreSQL**, autour d'une enseigne fictive qui vend du matériel informatique, de l'audio et du mobilier de bureau, dans six magasins et en ligne.
+Projet d'entraînement à l'analyse de données avec **PostgreSQL**, sur des **données simulées** : une enseigne fictive qui vend du matériel informatique, de l'audio et du mobilier de bureau, dans six magasins et en ligne.
 
 L'objectif : répondre avec SQL aux questions qu'une direction commerciale se pose réellement (qu'est-ce qui se vend, à qui, par quel canal, et est-ce rentable ?), puis présenter les résultats dans un tableau de bord Power BI.
 
@@ -11,7 +11,7 @@ L'objectif : répondre avec SQL aux questions qu'une direction commerciale se po
 | | |
 |:---|:---|
 | **Outils** | PostgreSQL 18, pgAdmin 4, Git / GitHub (Power BI à venir) |
-| **Données** | 100 clients, 21 produits, 6 magasins, environ 2 300 ventes de janvier 2024 à septembre 2026 |
+| **Données** | Simulées : 100 clients, 21 produits, 6 magasins, environ 2 300 ventes de janvier 2024 à septembre 2026 |
 | **Compétences SQL** | Jointures, agrégations, `GROUP BY` / `HAVING`, vues, sous-requêtes, CTE, fonctions de fenêtre, transactions |
 | **Statut** | En cours : vues, sous-requêtes, CTE et fonctions de fenêtre terminées ; diagnostic commercial et Power BI à venir |
 
@@ -40,6 +40,8 @@ magasins ─┘       │
 
 Les données sont **simulées** mais réalistes : saisonnalité (pic en novembre et décembre), soldes et Black Friday, magasins fermés le dimanche et les jours fériés, prix en hausse d'environ 3 % par an, et des tendances différentes selon les catégories.
 
+> **À savoir** : ces tendances sont paramétrées dans le script `03_enrichissement_donnees.sql` (croissance par catégorie, hausse des prix, saisonnalité, remises, coûts d'achat). Le but du projet n'est donc pas de découvrir des tendances inconnues, mais de **maîtriser SQL et la démarche d'analyse** : poser les bonnes questions, comparer des périodes comparables, et vérifier que les requêtes retrouvent fidèlement ce que contiennent les données.
+
 **Elles s'arrêtent au 30 septembre 2026**, date de l'analyse : l'année 2026 n'est pas terminée.
 
 ---
@@ -53,7 +55,9 @@ L'année 2026 ne compte que neuf mois. La comparer à l'année 2025 complète fe
 
 ---
 
-## Premiers constats
+## Résultats des analyses
+
+Les requêtes retrouvent les tendances paramétrées dans les données simulées. Les constats ci-dessous sont rédigés comme pour une vraie direction commerciale, pour s'entraîner à passer du chiffre à la recommandation.
 
 ### Évolution du chiffre d'affaires par catégorie, 2025 contre 2024
 
@@ -65,7 +69,7 @@ L'année 2026 ne compte que neuf mois. La comparer à l'année 2025 complète fe
 | Informatique | 46 143 | 67 521 | +21 378 | +46,3 % |
 | Mobilier | 50 747 | 46 683 | −4 064 | −8,0 % |
 
-**Constat** : l'Audio et l'Informatique tirent la croissance, tandis que le Mobilier, pourtant la catégorie la plus rentable, recule dès 2025.
+**Constat** : l'Audio et l'Informatique tirent la croissance, tandis que le Mobilier, pourtant la catégorie au meilleur taux de marge (coût d'achat fixé à 50 % du prix, contre 55 % pour l'Audio et 70 % pour l'Informatique), recule dès 2025.
 
 **Recommandation** : analyser les causes du recul du Mobilier (prix, visibilité, concurrence) avant qu'il ne pèse sur la marge globale.
 
@@ -78,7 +82,7 @@ La comparaison mois par mois montre de fortes variations d'un mois à l'autre : 
 ### Autres observations
 
 - **Les fêtes de fin d'année concentrent l'activité** : les meilleurs mois de la période sont tous des mois de novembre ou de décembre.
-- **Les promotions pèsent sur la rentabilité** : les mois de soldes et du Black Friday perdent plusieurs points de marge.
+- **Les promotions pèsent sur la rentabilité** : une remise baisse le prix de vente sans changer le coût d'achat. L'effet reste à chiffrer par une requête dédiée (voir les prochaines étapes).
 
 ---
 
@@ -139,9 +143,10 @@ Arrêt des données à la date de l'analyse par un script dédié, dans une tran
 - [x] Sous-requêtes
 - [x] CTE
 - [x] Fonctions de fenêtre : classements, cumuls, comparaisons d'une période à l'autre
-- [ ] Projet 1 : diagnostic commercial complet
+- [ ] Compléter l'analyse : taux de marge par catégorie et selon la remise, décomposition du chiffre d'affaires (nombre de ventes × panier moyen), canal et magasins
+- [ ] Projet 1 : diagnostic commercial complet, sur des données réelles
 - [ ] Tableau de bord Power BI avec mesures DAX d'évolution annuelle
 
 ---
 
-*Projet réalisé dans le cadre de ma formation à l'analyse de données.*
+*Projet d'entraînement personnel, réalisé dans le cadre de ma formation à l'analyse de données.*
