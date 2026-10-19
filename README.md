@@ -11,9 +11,9 @@ L'objectif : répondre avec SQL aux questions qu'une direction commerciale se po
 | | |
 |:---|:---|
 | **Outils** | PostgreSQL 18, pgAdmin 4, Git / GitHub (Power BI à venir) |
-| **Données** | 100 clients, 21 produits, 6 magasins, environ 2 700 ventes de janvier 2024 à décembre 2026 |
-| **Compétences SQL** | Jointures, agrégations, `GROUP BY` / `HAVING`, vues, sous-requêtes, CTE, fonctions de fenêtre, transactions |
-| **Statut** | En cours : vues, sous-requêtes et CTE terminées ; fonctions de fenêtre et projet de diagnostic en cours |
+| **Données** | 100 clients, 21 produits, 6 magasins, environ 2 300 ventes de janvier 2024 à septembre 2026 |
+| **Compétences SQL** | Jointures, agrégations, `GROUP BY` / `HAVING`, vues, sous-requêtes, CTE, transactions |
+| **Statut** | En cours : vues, sous-requêtes et CTE terminées ; fonctions de fenêtre à venir |
 
 ---
 
@@ -40,15 +40,42 @@ magasins ─┘       │
 
 Les données sont **simulées** mais réalistes : saisonnalité (pic en novembre et décembre), soldes et Black Friday, magasins fermés le dimanche et les jours fériés, prix en hausse d'environ 3 % par an, et des tendances différentes selon les catégories.
 
+**Elles s'arrêtent au 30 septembre 2026**, date de l'analyse : l'année 2026 n'est pas terminée.
+
+---
+
+## Méthode : comparer des périodes identiques
+
+L'année 2026 ne compte que neuf mois. La comparer à l'année 2025 complète ferait apparaître une baisse artificielle, d'autant que novembre et décembre sont les mois les plus forts. Les comparaisons sont donc faites ainsi :
+
+- **2025 contre 2024** : deux années complètes, comparaison annuelle ;
+- **2026 contre 2025** : même période, de janvier à septembre, et comparaison mois par mois.
+
 ---
 
 ## Premiers constats
 
-Quelques résultats obtenus pendant les exercices, à approfondir dans le projet de diagnostic.
+### Évolution du chiffre d'affaires par catégorie, 2025 contre 2024
 
-- **L'Audio est le moteur de croissance** : son chiffre d'affaires progresse d'environ 46 % entre 2025 et 2026, contre 6 % pour l'Informatique.
-- **Le Mobilier recule d'environ 9 %**, alors que c'est la catégorie la plus rentable. C'est le point d'attention principal.
-- **Les fêtes de fin d'année concentrent l'activité** : les cinq meilleurs mois de la période sont tous des mois de novembre ou de décembre.
+| Catégorie | CA 2024 (€) | CA 2025 (€) | Écart (€) | Évolution |
+|:---|---:|---:|---:|---:|
+| Audio | 26 882 | 42 871 | +15 989 | +59,5 % |
+| Informatique | 46 143 | 67 521 | +21 378 | +46,3 % |
+| Mobilier | 50 747 | 46 683 | −4 064 | −8,0 % |
+
+**Constat** : l'Audio et l'Informatique tirent la croissance, tandis que le Mobilier, pourtant la catégorie la plus rentable, recule dès 2025.
+
+**Recommandation** : analyser les causes du recul du Mobilier (prix, visibilité, concurrence) avant qu'il ne pèse sur la marge globale.
+
+### 2026 : une tendance confirmée sur janvier-septembre
+
+Sur les neuf premiers mois de 2026, comparés à la même période de 2025, l'Audio reste la catégorie la plus dynamique et le Mobilier continue de reculer.
+
+La comparaison mois par mois montre de fortes variations d'un mois à l'autre : un mois ne compte que quelques dizaines de ventes, et quelques grosses commandes suffisent à faire varier le pourcentage. Il faut donc lire la **tendance générale** plutôt qu'un mois isolé.
+
+### Autres observations
+
+- **Les fêtes de fin d'année concentrent l'activité** : les meilleurs mois de la période sont tous des mois de novembre ou de décembre.
 - **Les promotions pèsent sur la rentabilité** : les mois de soldes et du Black Friday perdent plusieurs points de marge.
 
 ---
@@ -58,13 +85,13 @@ Quelques résultats obtenus pendant les exercices, à approfondir dans le projet
 ```
 ventes-retail-sql/
 ├── README.md
-├── scripts/        Création et alimentation de la base
+├── Scripts/                 Création et alimentation de la base, dans l'ordre
 │   ├── 01_creation_base.sql
 │   ├── 02_preparation.sql
-│   └── 03_enrichissement.sql
-├── exercices/      Requêtes d'apprentissage, par thème
-└── projets/        Analyses complètes, rédigées comme pour une direction
-    └── projet_1_diagnostic.sql
+│   ├── 03_enrichissement.sql
+│   └── 04_arret_septembre_2026.sql
+└── Exercices/
+    └── 01_seance_projet_ventes_retail.sql
 ```
 
 ---
@@ -80,17 +107,22 @@ Comparaison à une valeur calculée (ventes supérieures à trois fois la moyenn
 **Leçon retenue** : pour trouver ce qui n'a *pas* de vente (un produit jamais vendu, un client sans achat), il faut partir des tables et non de la vue, qui ne contient que des ventes.
 
 ### CTE
-Découpage des analyses en étapes lisibles avec `WITH` : chiffre d'affaires par ville comparé à la moyenne, meilleurs mois de la période, comparaison 2025 / 2026 par catégorie avec évolution en pourcentage, clients dont les achats ont le plus baissé.
+Découpage des analyses en étapes lisibles avec `WITH` : chiffre d'affaires par ville comparé à la moyenne, meilleurs mois de la période, évolution par catégorie d'une année sur l'autre, comparaison mois par mois, clients dont les achats ont le plus baissé.
 
-**Leçon retenue** : pour mesurer une évolution, on calcule l'écart entre les deux périodes et on trie sur cet écart, jamais sur une seule des deux valeurs.
+**Leçons retenues** :
+- pour mesurer une évolution, on calcule l'écart entre les deux périodes et on trie sur cet écart, jamais sur une seule des deux valeurs ;
+- on ne compare que des périodes de même longueur.
+
+### Gestion des données
+Arrêt des données à la date de l'analyse par un script dédié, dans une transaction vérifiée avant validation (`BEGIN`, contrôle, `COMMIT`). Chaque modification de la base est conservée sous forme de script numéroté, pour pouvoir la recréer à l'identique.
 
 ---
 
 ## Recréer la base
 
 1. Créer une base vide `ventes_retail` dans PostgreSQL.
-2. Exécuter les scripts du dossier `scripts/` dans l'ordre de leur numéro, depuis le Query Tool de pgAdmin.
-3. Vérifier le résultat : le dernier script affiche un bilan (nombre de clients, de produits, de ventes et chiffre d'affaires par année).
+2. Exécuter les scripts du dossier `Scripts/` dans l'ordre de leur numéro, de 01 à 04, depuis le Query Tool de pgAdmin.
+3. Vérifier le résultat : les ventes doivent aller de janvier 2024 au 30 septembre 2026.
 
 ---
 
@@ -99,7 +131,7 @@ Découpage des analyses en étapes lisibles avec `WITH` : chiffre d'affaires par
 - [x] Vues
 - [x] Sous-requêtes
 - [x] CTE
-- [ ] Fonctions de fenêtre : classements, cumuls, comparaisons d'une année sur l'autre
+- [ ] Fonctions de fenêtre : classements, cumuls, comparaisons d'une période à l'autre
 - [ ] Projet 1 : diagnostic commercial complet
 - [ ] Tableau de bord Power BI avec mesures DAX d'évolution annuelle
 

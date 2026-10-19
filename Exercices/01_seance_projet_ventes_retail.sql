@@ -1,3 +1,11 @@
+-- =====================================================================
+-- Exercices SQL : vues, sous-requêtes, CTE et analyses d'évolution
+-- Base : ventes_retail (ventes de janvier 2024 à septembre 2026)
+-- Les comparaisons 2025-2026 portent sur la période janvier-septembre,
+-- 2026 n'étant pas terminée à la date de l'analyse.
+-- =====================================================================
+
+
 -- Ajout du client
 
 SELECT v.vente_id, v.date_vente,
@@ -67,7 +75,7 @@ LEFT JOIN magasins m ON m.magasin_id = v.magasin_id;
 -- création de la vue ca par catégorie.
 CREATE VIEW v_ca_par_categorie AS
 SELECT categorie, COUNT(*) AS nb_ventes, SUM(montant_net) AS ca_net
-FROM v_ventes_details
+FROM v_ventes_detail
 GROUP BY categorie;
 
 SELECT * FROM v_ca_par_categorie;
@@ -141,7 +149,7 @@ FROM ca_par_mois
 ORDER BY ca DESC
 LIMIT 5 
 
---3 Reprenez l’exemple 2025 contre 2026 et ajoutez une colonne avec l’évolution en pourcentage. Quelle catégorie progresse le plus, et laquelle recule ?
+--3 Reprenons l’exemple 2025 contre 2026 et ajoutez une colonne avec l’évolution en pourcentage. Quelle catégorie progresse le plus, et laquelle recule ?
 
 WITH ventes_2025 AS (
     SELECT categorie, SUM(montant_net) AS ca
@@ -152,7 +160,7 @@ WITH ventes_2025 AS (
 ventes_2026 AS (
     SELECT categorie, SUM(montant_net) AS ca
     FROM v_ventes_detail
-    WHERE date_vente BETWEEN '2026-01-01' AND '2026-12-31'
+    WHERE date_vente BETWEEN '2026-01-01' AND '2026-09-30'
     GROUP BY categorie
 )
 SELECT a.categorie, 
@@ -174,7 +182,7 @@ WITH total_2025 AS (
 total_2026 AS (
     SELECT client_id, prenom,nom, SUM(montant_net) AS ca
     FROM v_ventes_detail
-    WHERE date_vente BETWEEN '2026-01-01' AND '2026-12-31'
+    WHERE date_vente BETWEEN '2026-01-01' AND '2026-09-30'
     GROUP BY client_id, prenom, nom
 )
 SELECT a.prenom, a.nom,
@@ -186,3 +194,139 @@ JOIN total_2026 b ON b.client_id = a.client_id
 WHERE b.ca < a.ca
 ORDER BY baisse DESC
 LIMIT 3;
+
+--5 Évolution du chiffre d'affaires par catégorie, 2025 contre 2026
+WITH ventes_2025 AS (
+    SELECT categorie, SUM(montant_net) AS ca
+    FROM v_ventes_detail
+    WHERE date_vente BETWEEN '2025-01-01' AND '2025-12-31'
+    GROUP BY categorie
+),
+ventes_2026 AS (
+    SELECT categorie, SUM(montant_net) AS ca
+    FROM v_ventes_detail
+    WHERE date_vente BETWEEN '2026-01-01' AND '2026-09-30'
+    GROUP BY categorie
+)
+SELECT a.categorie                          AS "Catégorie",
+       ROUND(a.ca)                          AS "CA 2025 (€)",
+       ROUND(b.ca)                          AS "CA 2026 (€)",
+       ROUND(b.ca - a.ca)                   AS "Écart (€)",
+       ROUND(100 * (b.ca - a.ca) / a.ca, 1) AS "Évolution (%)"
+FROM ventes_2025 a
+JOIN ventes_2026 b ON b.categorie = a.categorie
+ORDER BY "Évolution (%)" DESC;
+
+-- comparaison des ventes mensuelles de  2025 à 2026
+
+WITH mois_2025 AS (
+    SELECT EXTRACT(MONTH FROM date_vente) AS mois, SUM(montant_net) AS ca
+    FROM v_ventes_detail
+    WHERE date_vente BETWEEN '2025-01-01' AND '2025-09-30'
+    GROUP BY EXTRACT(MONTH FROM date_vente)
+),
+mois_2026 AS (
+    SELECT EXTRACT(MONTH FROM date_vente) AS mois, SUM(montant_net) AS ca
+    FROM v_ventes_detail
+    WHERE date_vente BETWEEN '2026-01-01' AND '2026-09-30'
+    GROUP BY EXTRACT(MONTH FROM date_vente)
+)
+SELECT a.mois                               AS "Mois",
+       ROUND(a.ca)                          AS "CA 2025 (€)",
+       ROUND(b.ca)                          AS "CA 2026 (€)",
+       ROUND(b.ca - a.ca)                   AS "Écart (€)",
+       ROUND(100 * (b.ca - a.ca) / a.ca, 1) AS "Évolution (%)"
+FROM mois_2025 a
+JOIN mois_2026 b ON b.mois = a.mois
+ORDER BY a.mois;
+
+-- EXO 4
+-- 1 Affichons chaque catégorie avec son chiffre d’affaires et sa part du chiffre d’affaires total, en pourcentage arrondi à une décimale.
+WITH ca_categorie AS (
+    SELECT categorie, SUM(montant_net) AS ca
+    FROM v_ventes_detail
+    GROUP BY categorie
+)
+SELECT categorie, ca,
+       ROUND(100 * ca / SUM(ca) OVER (), 1) AS part_pct
+FROM ca_categorie
+ORDER BY ca DESC;
+
+--2 Classez les produits par chiffre d’affaires au sein de leur catégorie.
+WITH ca_produit AS (
+    SELECT categorie, produit, SUM(montant_net) AS ca
+    FROM v_ventes_detail
+    GROUP BY categorie, produit
+)
+SELECT categorie, produit, ca,
+       RANK() OVER (PARTITION BY categorie ORDER BY ca DESC) AS rang
+FROM ca_produit
+ORDER BY categorie, rang;
+-- 3 Affichons le chiffre d’affaires de chaque mois de 2026 et le cumul depuis janvier.
+WITH ca_mois AS (
+    SELECT DATE_TRUNC('month', date_vente)::date AS mois, SUM(montant_net) AS ca
+    FROM v_ventes_detail
+    WHERE date_vente BETWEEN '2026-01-01' AND '2026-09-30'
+    GROUP BY 1
+)
+SELECT mois, ca, SUM(ca) OVER (ORDER BY mois) AS ca_cumule
+FROM ca_mois
+
+--4 Affichons le chiffre d’affaires de chaque mois, celui du mois précédent et l’écart entre les deux.
+WITH ca_mois AS (
+    SELECT DATE_TRUNC('month', date_vente)::date AS mois, SUM(montant_net) AS ca
+    FROM v_ventes_detail
+    GROUP BY 1
+)
+SELECT mois, ca,
+       LAG(ca) OVER (ORDER BY mois) AS ca_mois_precedent,
+       ca - LAG(ca) OVER (ORDER BY mois) AS ecart
+FROM ca_mois
+ORDER BY mois;
+
+--5 Affichez les 3 meilleurs clients de chaque ville, selon leur chiffre d’affaires net.
+
+WITH classement AS (
+    SELECT ville_client, prenom, nom, SUM(montant_net) AS total,
+           ROW_NUMBER() OVER (PARTITION BY ville_client
+                              ORDER BY SUM(montant_net) DESC) AS rang
+    FROM v_ventes_detail
+    GROUP BY ville_client, client_id, prenom, nom
+)
+SELECT ville_client, rang, prenom, nom, total
+FROM classement
+WHERE rang <= 3
+ORDER BY ville_client, rang;
+--6.	Bonus : pour chaque mois, affichez son chiffre d’affaires, celui du même mois de l’année précédente et l’évolution en pourcentage.
+WITH ca_mois AS (
+    SELECT DATE_TRUNC('month', date_vente)::date AS mois, SUM(montant_net) AS ca
+    FROM v_ventes_detail
+    GROUP BY 1
+)
+SELECT mois, ca,
+       LAG(ca, 12) OVER (ORDER BY mois) AS ca_annee_precedente,
+       ROUND(100 * (ca - LAG(ca, 12) OVER (ORDER BY mois))
+             / LAG(ca, 12) OVER (ORDER BY mois), 1) AS evolution_pct
+FROM ca_mois
+ORDER BY mois
+
+--Défi final
+CREATE VIEW v_bilan_categorie_annee AS
+WITH ca_annuel AS (
+    SELECT categorie,
+           EXTRACT(YEAR FROM date_vente)::int AS annee,
+           SUM(montant_net) AS ca
+    FROM v_ventes_detail
+    GROUP BY categorie, annee
+)
+SELECT annee,
+       categorie,
+       ca,
+       LAG(ca) OVER (PARTITION BY categorie ORDER BY annee) AS ca_annee_precedente,
+       ROUND(100 * (ca - LAG(ca) OVER (PARTITION BY categorie ORDER BY annee))
+             / LAG(ca) OVER (PARTITION BY categorie ORDER BY annee), 1) AS evolution_pct,
+       RANK() OVER (PARTITION BY annee ORDER BY ca DESC) AS rang_dans_annee
+FROM ca_annuel;
+
+SELECT * FROM v_bilan_categorie_annee ORDER BY annee, rang_dans_annee;
+
