@@ -1,7 +1,7 @@
 
--- Enrichissement de ma_base_test pour Power BI (3 années complètes)
+-- 03 - Enrichissement de ventes_retail pour l'analyse et Power BI
 
--- À exécuter UNE SEULE FOIS dans le Query Tool de ma_base_test (F5),
+-- À exécuter UNE SEULE FOIS dans le Query Tool de ventes_retail (F5),
 -- sans rien sélectionner. Remplace les versions précédentes du script.
 -- Vos données existantes sont conservées. Le script ajoute :
 --   - 2 magasins, 12 produits et assez de clients pour atteindre 100 ;
@@ -9,7 +9,8 @@
 --   - le prix payé dans chaque vente, le canal, le magasin, la remise ;
 --   - une table calendrier du 01/01/2024 au 31/12/2026, jours fériés compris ;
 --   - environ 2 900 ventes du 1er janvier 2024 au 31 décembre 2026,
---     soit trois années complètes (fin 2026 simulée)
+--     soit trois années complètes (fin 2026 simulée) ; le script 04
+--     arrête ensuite les données au 30 septembre 2026, date de l'analyse
 
 
 -- 0. Sécurité : arrêter tout si un script d'enrichissement a déjà tourné

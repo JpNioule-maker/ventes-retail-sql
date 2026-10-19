@@ -1,5 +1,5 @@
 -- =====================================================================
--- Exercices SQL : vues, sous-requêtes, CTE et analyses d'évolution
+-- Exercices SQL : vues, sous-requêtes, CTE, fonctions de fenêtre
 -- Base : ventes_retail (ventes de janvier 2024 à septembre 2026)
 -- Les comparaisons 2025-2026 portent sur la période janvier-septembre,
 -- 2026 n'étant pas terminée à la date de l'analyse.
@@ -54,9 +54,11 @@ JOIN produits p      ON p.produit_id = v.produit_id
 LEFT JOIN magasins m ON m.magasin_id = v.magasin_id
 LIMIT 10;
 
--- Enregistrons la requete comme vue
+-- Enregistrons la requête comme vue
+-- (même définition que la vue créée par Scripts/03_enrichissement_donnees.sql :
+--  CREATE OR REPLACE la recrée à l'identique, sans doublon)
 
-CREATE VIEW v_ventes_details AS
+CREATE OR REPLACE VIEW v_ventes_detail AS
 SELECT v.vente_id, v.date_vente, v.canal, m.ville AS ville_magasin,
        c.client_id, c.prenom, c.nom, c.ville AS ville_client,
        p.produit_id, p.nom AS produit, p.categorie,
@@ -73,7 +75,7 @@ JOIN produits p      ON p.produit_id = v.produit_id
 LEFT JOIN magasins m ON m.magasin_id = v.magasin_id;
 
 -- création de la vue ca par catégorie.
-CREATE VIEW v_ca_par_categorie AS
+CREATE OR REPLACE VIEW v_ca_par_categorie AS
 SELECT categorie, COUNT(*) AS nb_ventes, SUM(montant_net) AS ca_net
 FROM v_ventes_detail
 GROUP BY categorie;
@@ -95,6 +97,8 @@ SELECT produit_id, nom, categorie
 FROM produits
 WHERE produit_id NOT IN (SELECT produit_id
 FROM ventes);
+-- Réponse : la vue ne contient que des lignes de vente. Un produit jamais vendu
+-- n'y apparaît donc pas : il faut partir de la table produits.
 
 --3 Combien de ventes, tous produits confondus, ont réalisé les clients qui ont acheté au moins un « Fauteuil ergonomique » ?
 SELECT client_id, nom, prenom, COUNT(vente_id) AS nbre_ventes
@@ -108,7 +112,7 @@ ORDER BY nbre_ventes DESC;
 
 --4 Affichons le détail de la vente dont le montant net est le plus élevé de toute la base.
 
-SELECT*
+SELECT *
 FROM v_ventes_detail
 WHERE montant_net =
 (SELECT MAX(montant_net)
@@ -119,7 +123,7 @@ FROM v_ventes_detail);
 SELECT ROUND(AVG(total_depense),1) AS ca_moyen
 FROM (SELECT client_id, SUM(montant_net) AS total_depense
 FROM v_ventes_detail
-GROUP BY client_id) AS t
+GROUP BY client_id) AS t;
 
 -- EXO 3
 
@@ -135,7 +139,7 @@ WITH ca_ville_clients AS (
 SELECT ville_client,ca
 FROM ca_ville_clients
 WHERE ca >(SELECT AVG(ca) FROM ca_ville_clients)
-ORDER BY ville_client,ca DESC;
+ORDER BY ca DESC;
 
 --2  calculons le chiffre d’affaires de chaque mois, puis affichons les 5 meilleurs mois de toute la période.
 
@@ -147,14 +151,15 @@ GROUP BY 1
 SELECT mois,ca
 FROM ca_par_mois
 ORDER BY ca DESC
-LIMIT 5 
+LIMIT 5;
 
 --3 Reprenons l’exemple 2025 contre 2026 et ajoutez une colonne avec l’évolution en pourcentage. Quelle catégorie progresse le plus, et laquelle recule ?
+--  2026 s'arrête au 30 septembre : on compare janvier-septembre des deux années.
 
 WITH ventes_2025 AS (
     SELECT categorie, SUM(montant_net) AS ca
     FROM v_ventes_detail
-    WHERE date_vente BETWEEN '2025-01-01' AND '2025-12-31'
+    WHERE date_vente BETWEEN '2025-01-01' AND '2025-09-30'
     GROUP BY categorie
 ),
 ventes_2026 AS (
@@ -170,13 +175,14 @@ SELECT a.categorie,
 FROM ventes_2025 a
 JOIN ventes_2026 b ON b.categorie = a.categorie
 ORDER BY evolution_pct DESC;
+-- Réponse : l'Audio est la catégorie la plus dynamique, le Mobilier recule.
 
---4 affichons les 3 clients dont les achats ont le plus baissé entre 2025 et 2026, avec leurs deux totaux.
+--4 affichons les 3 clients dont les achats ont le plus baissé entre 2025 et 2026 (janvier-septembre), avec leurs deux totaux.
 
 WITH total_2025 AS (
     SELECT client_id, prenom, nom, SUM(montant_net) AS ca
     FROM v_ventes_detail
-    WHERE date_vente BETWEEN '2025-01-01' AND '2025-12-31'
+    WHERE date_vente BETWEEN '2025-01-01' AND '2025-09-30'
     GROUP BY client_id, prenom, nom
 ),
 total_2026 AS (
@@ -195,11 +201,11 @@ WHERE b.ca < a.ca
 ORDER BY baisse DESC
 LIMIT 3;
 
---5 Évolution du chiffre d'affaires par catégorie, 2025 contre 2026
+--5 Évolution du chiffre d'affaires par catégorie, janvier-septembre 2026 contre janvier-septembre 2025
 WITH ventes_2025 AS (
     SELECT categorie, SUM(montant_net) AS ca
     FROM v_ventes_detail
-    WHERE date_vente BETWEEN '2025-01-01' AND '2025-12-31'
+    WHERE date_vente BETWEEN '2025-01-01' AND '2025-09-30'
     GROUP BY categorie
 ),
 ventes_2026 AS (
@@ -271,6 +277,7 @@ WITH ca_mois AS (
 )
 SELECT mois, ca, SUM(ca) OVER (ORDER BY mois) AS ca_cumule
 FROM ca_mois
+ORDER BY mois;
 
 --4 Affichons le chiffre d’affaires de chaque mois, celui du mois précédent et l’écart entre les deux.
 WITH ca_mois AS (
@@ -308,10 +315,11 @@ SELECT mois, ca,
        ROUND(100 * (ca - LAG(ca, 12) OVER (ORDER BY mois))
              / LAG(ca, 12) OVER (ORDER BY mois), 1) AS evolution_pct
 FROM ca_mois
-ORDER BY mois
+ORDER BY mois;
+-- LAG(ca, 12) suppose qu'aucun mois ne manque dans la série.
 
---Défi final
-CREATE VIEW v_bilan_categorie_annee AS
+--Défi final : bilan annuel par catégorie (source du tableau 2025 contre 2024 du README)
+CREATE OR REPLACE VIEW v_bilan_categorie_annee AS
 WITH ca_annuel AS (
     SELECT categorie,
            EXTRACT(YEAR FROM date_vente)::int AS annee,

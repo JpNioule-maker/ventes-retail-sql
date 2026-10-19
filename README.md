@@ -12,8 +12,8 @@ L'objectif : répondre avec SQL aux questions qu'une direction commerciale se po
 |:---|:---|
 | **Outils** | PostgreSQL 18, pgAdmin 4, Git / GitHub (Power BI à venir) |
 | **Données** | 100 clients, 21 produits, 6 magasins, environ 2 300 ventes de janvier 2024 à septembre 2026 |
-| **Compétences SQL** | Jointures, agrégations, `GROUP BY` / `HAVING`, vues, sous-requêtes, CTE, transactions |
-| **Statut** | En cours : vues, sous-requêtes et CTE terminées ; fonctions de fenêtre à venir |
+| **Compétences SQL** | Jointures, agrégations, `GROUP BY` / `HAVING`, vues, sous-requêtes, CTE, fonctions de fenêtre, transactions |
+| **Statut** | En cours : vues, sous-requêtes, CTE et fonctions de fenêtre terminées ; diagnostic commercial et Power BI à venir |
 
 ---
 
@@ -57,6 +57,8 @@ L'année 2026 ne compte que neuf mois. La comparer à l'année 2025 complète fe
 
 ### Évolution du chiffre d'affaires par catégorie, 2025 contre 2024
 
+*Source : vue `v_bilan_categorie_annee` (défi final du fichier d'exercices).*
+
 | Catégorie | CA 2024 (€) | CA 2025 (€) | Écart (€) | Évolution |
 |:---|---:|---:|---:|---:|
 | Audio | 26 882 | 42 871 | +15 989 | +59,5 % |
@@ -86,12 +88,12 @@ La comparaison mois par mois montre de fortes variations d'un mois à l'autre : 
 ventes-retail-sql/
 ├── README.md
 ├── Scripts/                 Création et alimentation de la base, dans l'ordre
-│   ├── 01_creation_base.sql
-│   ├── 02_preparation.sql
-│   ├── 03_enrichissement.sql
-│   └── 04_arret_septembre_2026.sql
+│   ├── 01_creation_ventes_retail.sql   Tables clients, produits, ventes
+│   ├── 02_preparation.sql              Cas particuliers et magasins
+│   ├── 03_enrichissement_donnees.sql   Données réalistes, calendrier, vue v_ventes_detail
+│   └── 04_arret_septembre_2026.sql     Arrêt des données à la date de l'analyse
 └── Exercices/
-    └── 01_seance_projet_ventes_retail.sql
+    └── 01_seance_projet_ventes_retail.sql   Vues, sous-requêtes, CTE, fonctions de fenêtre
 ```
 
 ---
@@ -113,6 +115,11 @@ Découpage des analyses en étapes lisibles avec `WITH` : chiffre d'affaires par
 - pour mesurer une évolution, on calcule l'écart entre les deux périodes et on trie sur cet écart, jamais sur une seule des deux valeurs ;
 - on ne compare que des périodes de même longueur.
 
+### Fonctions de fenêtre
+Calculs qui conservent le détail des lignes tout en les situant dans un ensemble : part de chaque catégorie dans le chiffre d'affaires total (`SUM() OVER ()`), classement des produits au sein de leur catégorie (`RANK()`), cumul mensuel depuis janvier (`SUM() OVER (ORDER BY …)`), écart avec le mois précédent et avec le même mois de l'année précédente (`LAG()`), trois meilleurs clients par ville (`ROW_NUMBER()`). Synthèse dans la vue `v_bilan_categorie_annee` : chiffre d'affaires annuel par catégorie, évolution sur un an et rang.
+
+**Leçon retenue** : `LAG(ca, 12)` compare au même mois de l'année précédente seulement si aucun mois ne manque dans la série.
+
 ### Gestion des données
 Arrêt des données à la date de l'analyse par un script dédié, dans une transaction vérifiée avant validation (`BEGIN`, contrôle, `COMMIT`). Chaque modification de la base est conservée sous forme de script numéroté, pour pouvoir la recréer à l'identique.
 
@@ -131,7 +138,7 @@ Arrêt des données à la date de l'analyse par un script dédié, dans une tran
 - [x] Vues
 - [x] Sous-requêtes
 - [x] CTE
-- [ ] Fonctions de fenêtre : classements, cumuls, comparaisons d'une période à l'autre
+- [x] Fonctions de fenêtre : classements, cumuls, comparaisons d'une période à l'autre
 - [ ] Projet 1 : diagnostic commercial complet
 - [ ] Tableau de bord Power BI avec mesures DAX d'évolution annuelle
 

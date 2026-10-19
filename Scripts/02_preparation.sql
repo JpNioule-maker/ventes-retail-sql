@@ -1,6 +1,6 @@
 
 -- 02 - Préparation : cas particuliers et table des magasins
--- À exécuter après 01_creation_base.sql
+-- À exécuter après 01_creation_ventes_retail.sql
 
 
 -- Une cliente qui n'a encore rien acheté
