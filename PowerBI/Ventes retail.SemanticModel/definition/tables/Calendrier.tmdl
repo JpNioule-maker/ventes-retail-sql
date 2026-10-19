@@ -1,0 +1,101 @@
+table Calendrier
+	lineageTag: 84d3c3d2-62fa-22d0-7fa2-4b70e76716ec
+	dataCategory: Time
+
+	column date_jour
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 7c6ccb0b-5e42-cf30-661b-09dd9a8e5206
+		summarizeBy: none
+		sourceColumn: date_jour
+		isKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column annee
+		dataType: int64
+		formatString: 0
+		lineageTag: 833e4c4a-73e4-5fc3-7876-0508df9cccb2
+		summarizeBy: none
+		sourceColumn: annee
+
+		annotation SummarizationSetBy = Automatic
+
+	column trimestre
+		dataType: int64
+		formatString: 0
+		lineageTag: 3144838a-a347-17a3-1489-3a8f91060750
+		summarizeBy: none
+		sourceColumn: trimestre
+
+		annotation SummarizationSetBy = Automatic
+
+	column mois
+		dataType: int64
+		formatString: 0
+		lineageTag: 646b6e02-2363-d2a9-0794-0a4016422058
+		summarizeBy: none
+		sourceColumn: mois
+
+		annotation SummarizationSetBy = Automatic
+
+	column nom_mois
+		dataType: string
+		lineageTag: 0e2a90b9-862c-20aa-59a3-4026a004eb85
+		summarizeBy: none
+		sourceColumn: nom_mois
+		sortByColumn: mois
+
+		annotation SummarizationSetBy = Automatic
+
+	column annee_mois
+		dataType: string
+		lineageTag: 2ab4e2c6-57ac-8e1d-cf48-95201131f5b1
+		summarizeBy: none
+		sourceColumn: annee_mois
+
+		annotation SummarizationSetBy = Automatic
+
+	column jour_semaine
+		dataType: int64
+		formatString: 0
+		lineageTag: 0a9d76a1-4844-8f43-a28c-8c67e22bb18f
+		summarizeBy: none
+		sourceColumn: jour_semaine
+
+		annotation SummarizationSetBy = Automatic
+
+	column nom_jour
+		dataType: string
+		lineageTag: cefa0e8b-da4d-ab9e-8c86-4fda1e6b8829
+		summarizeBy: none
+		sourceColumn: nom_jour
+		sortByColumn: jour_semaine
+
+		annotation SummarizationSetBy = Automatic
+
+	column est_weekend
+		dataType: boolean
+		lineageTag: 7a414a73-7a64-e3e1-4268-13c9c9224f05
+		summarizeBy: none
+		sourceColumn: est_weekend
+
+		annotation SummarizationSetBy = Automatic
+
+	column est_ferie
+		dataType: boolean
+		lineageTag: a06bbc9f-b877-9bfa-e89e-b481eed0f0f5
+		summarizeBy: none
+		sourceColumn: est_ferie
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Calendrier = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost", "ventes_retail"),
+				    Donnees = Source{[Schema="public", Item="calendrier"]}[Data]
+				in
+				    Donnees
+

@@ -1,0 +1,4 @@
+relationship 94437129-c013-7db8-4f8b-3528908792cc
+	fromColumn: Ventes.date_vente
+	toColumn: Calendrier.date_jour
+
