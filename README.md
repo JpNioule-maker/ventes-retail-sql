@@ -10,10 +10,10 @@ L'objectif : répondre avec SQL aux questions qu'une direction commerciale se po
 
 | | |
 |:---|:---|
-| **Outils** | PostgreSQL 18, pgAdmin 4, Git / GitHub (Power BI à venir) |
+| **Outils** | PostgreSQL 18, pgAdmin 4, Power BI Desktop (DAX), Git / GitHub |
 | **Données** | Simulées : 100 clients, 21 produits, 6 magasins, environ 2 300 ventes de janvier 2024 à septembre 2026 |
 | **Compétences SQL** | Jointures, agrégations, `GROUP BY` / `HAVING`, vues, sous-requêtes, CTE, fonctions de fenêtre, transactions |
-| **Statut** | En cours : vues, sous-requêtes, CTE et fonctions de fenêtre terminées ; diagnostic commercial et Power BI à venir |
+| **Statut** | En cours : analyses SQL et dashboard Power BI terminés ; diagnostic commercial sur données réelles à venir |
 
 ---
 
@@ -134,11 +134,39 @@ La comparaison mois par mois montre de fortes variations d'un mois à l'autre : 
 
 ---
 
+## Dashboard Power BI
+
+![Dashboard Power BI « Performance commerciale »](PowerBI/apercu-dashboard.png)
+
+Le rapport **« Performance commerciale »** (`PowerBI/ventes_retail_dashboard.pbix`) est connecté à la base PostgreSQL et répond à une question : **notre croissance est-elle au rendez-vous, et est-elle rentable ?**
+
+- **Quatre indicateurs** : CA net, marge (avec le taux de marge), nombre de ventes et panier moyen, chacun comparé à N-1.
+- **CA mensuel** de l'année sélectionnée, comparé à la même période de l'année précédente.
+- **CA par catégorie**, en vert si la catégorie progresse par rapport à N-1, en rouge si elle recule.
+- **CA par canal**, magasin et en ligne, comparé à N-1.
+- **Filtre par année.** Les comparaisons à N-1 portent sur la même période : en 2026, janvier-septembre contre janvier-septembre 2025.
+
+**Lecture de janvier-septembre 2026** (contre la même période de 2025) :
+
+| Indicateur | Janvier-septembre 2026 | Évolution vs N-1 |
+|:---|---:|---:|
+| CA net | 104 K€ | +14,1 % |
+| Marge | 41 K€ (taux de marge 39,2 %) | +19,9 % |
+| Nombre de ventes | 617 | +10,4 % |
+| Panier moyen | 169 € | +3,4 % |
+
+La croissance se poursuit, portée surtout par le nombre de ventes, et la marge progresse plus vite que le chiffre d'affaires. Les deux canaux progressent (magasins 57 K€ contre 49 K€, en ligne 47 K€ contre 43 K€). Le Mobilier reste la seule catégorie en baisse.
+
+---
+
 ## Organisation du dépôt
 
 ```
 ventes-retail-sql/
 ├── README.md
+├── PowerBI/
+│   ├── ventes_retail_dashboard.pbix    Dashboard « Performance commerciale »
+│   └── apercu-dashboard.png            Capture du dashboard
 ├── Scripts/                 Création et alimentation de la base, dans l'ordre
 │   ├── 01_creation_ventes_retail.sql   Tables clients, produits, ventes
 │   ├── 02_preparation.sql              Cas particuliers et magasins
@@ -194,7 +222,7 @@ Arrêt des données à la date de l'analyse par un script dédié, dans une tran
 - [x] Fonctions de fenêtre : classements, cumuls, comparaisons d'une période à l'autre
 - [x] Compléter l'analyse : taux de marge par catégorie et selon la remise, décomposition du chiffre d'affaires (nombre de ventes × panier moyen), canal et magasins
 - [ ] Projet 1 : diagnostic commercial complet, sur des données réelles
-- [ ] Tableau de bord Power BI avec mesures DAX d'évolution annuelle
+- [x] Tableau de bord Power BI avec mesures DAX de comparaison à N-1
 
 ---
 
